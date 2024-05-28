@@ -1,0 +1,12 @@
+{
+    "ad_block_lists": [
+        "https://www.github.developerdan.com/hosts/"
+        
+    ],
+    "malware_block_lists": [
+        "https://www.github.developerdan.com/hosts/"
+    ],
+    "tracking_block_lists": [
+        "https://www.github.developerdan.com/hosts/"
+    ]
+}
