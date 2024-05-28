@@ -11,7 +11,7 @@ from datetime import datetime
 CONFIG_FILE = 'config.json'
 
 def get_hosts_file_path():
-    return r'C:\Windows\System32\drivers\etc\hosts' if platform.system() == 'Windows' else '/etc/hosts'
+    return r'D:\test\hosts' if platform.system() == 'Windows' else '/etc/hosts'
 
 def backup_hosts_file(hosts_path):
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
