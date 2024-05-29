@@ -1,6 +1,6 @@
 {
     "ad_block_lists": [
-        "https://www.github.developerdan.com/hosts/"
+        "https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt"
         
     ],
     "malware_block_lists": [
@@ -8,5 +8,8 @@
     ],
     "tracking_block_lists": [
         "https://www.github.developerdan.com/hosts/"
+    ],
+    "malicious_block_lists": [
+        "https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt"
     ]
 }
