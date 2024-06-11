@@ -2,7 +2,6 @@ import os
 import platform
 import shutil
 import requests
-import re
 import json
 import tkinter as tk
 from tkinter import messagebox
@@ -16,6 +15,11 @@ def get_hosts_file_path():
     else:
         path = '/etc/blocked_hosts/hosts'
     return path
+
+def ensure_directory_exists(path):
+    directory = os.path.dirname(path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
 def backup_hosts_file(hosts_path):
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -56,10 +60,13 @@ def download_and_parse_lists(urls):
     domains = set()
     for url in urls:
         try:
+            print(f"Downloading from {url}...")
             response = requests.get(url)
             response.raise_for_status()
+            
             # Debug print to check the content of the response
             print(f"Content from {url}:\n{response.text[:500]}...\n")  # Print first 500 characters
+            
             for line in response.text.splitlines():
                 line = line.strip()  # Remove leading/trailing whitespace
                 if line.startswith('0.0.0.0') or line.startswith('127.0.0.1'):
@@ -69,13 +76,14 @@ def download_and_parse_lists(urls):
                         domains.add(domain)
         except requests.RequestException as e:
             print(f"Failed to download {url}: {e}")
+    print(f"Collected domains: {domains}")
     return domains
-
 
 def append_to_hosts_file(hosts_path, domains):
     with open(hosts_path, 'a') as hosts_file:
         hosts_file.write('\n'.join(f"0.0.0.0 {domain}" for domain in domains) + '\n')
-
+    print(f"Appended domains to hosts file: {domains}")
+    
 def update_hosts_file(block_ads, block_malware, block_tracking, block_malicious):
     with open(CONFIG_FILE, 'r') as file:
         config = json.load(file)
