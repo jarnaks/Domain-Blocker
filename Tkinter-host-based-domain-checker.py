@@ -88,7 +88,7 @@ def update_hosts_file(block_ads, block_malware, block_tracking, block_malicious)
     if block_tracking:
         urls.extend(config.get('tracking_block_lists', []))
     if block_malicious:
-        urls.extend(config.get('malicious_block_lists', []))
+        urls.extend(config.get('ad_block_lists', []))
 
     if not urls:
         messagebox.showerror("Error", "No block lists selected.")
