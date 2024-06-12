@@ -4,6 +4,7 @@ import shutil
 import requests
 import json
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 from datetime import datetime
 
@@ -45,19 +46,14 @@ def restore_hosts_file():
     else:
         messagebox.showerror("Restore", "No backup found to restore.")
 
-#def download_and_parse_lists(urls):
-    #domains = set()
-    #for url in urls:
-        #try:
-            #response = requests.get(url)
-            #response.raise_for_status()
-            #domains.update(re.findall(r'^\s*(?:0\.0\.0\.0|127\.0\.0\.1)\s+(\S+)', response.text, re.MULTILINE))
-        #except requests.RequestException as e:
-            #print(f"Failed to download {url}: {e}")
-    #return domains
-
 def download_and_parse_lists(urls):
-    domains = set()
+    domains = {
+        'advertisement': set(),
+        'malware': set(),
+        'tracking': set(),
+        'malicious': set()
+    }
+
     for url in urls:
         try:
             print(f"Downloading from {url}...")
@@ -69,22 +65,37 @@ def download_and_parse_lists(urls):
             
             for line in response.text.splitlines():
                 line = line.strip()  # Remove leading/trailing whitespace
-                if line.startswith('0.0.0.0') or line.startswith('127.0.0.1'):
+                domain_type = None
+
+                if 'malicious' in url:
+                    domain_type = 'malicious'
+                elif 'ads-and-tracking' in url:
+                    domain_type = 'advertisement'
+                elif 'malware' in url:
+                    domain_type = 'malware'
+                elif 'tracking' in url:
+                    domain_type = 'tracking'
+
+                if domain_type and (line.startswith('0.0.0.0') or line.startswith('127.0.0.1')):
                     parts = line.split()
                     if len(parts) > 1:
                         domain = parts[1]
-                        domains.add(domain)
+                        domains[domain_type].add(domain)
         except requests.RequestException as e:
             print(f"Failed to download {url}: {e}")
+
     print(f"Collected domains: {domains}")
     return domains
 
 def append_to_hosts_file(hosts_path, domains):
     with open(hosts_path, 'a') as hosts_file:
-        hosts_file.write('\n'.join(f"0.0.0.0 {domain}" for domain in domains) + '\n')
+        for domain_type, domain_set in domains.items():
+            if domain_set:
+                hosts_file.write(f"\n# {domain_type.capitalize()} domains\n")
+                hosts_file.write('\n'.join(f"0.0.0.0 {domain}" for domain in domain_set) + '\n')
     print(f"Appended domains to hosts file: {domains}")
     
-def update_hosts_file(block_ads, block_malware, block_tracking, block_malicious):
+def update_hosts_file(block_ads, block_malware, block_tracking, block_malicious, log_text):
     with open(CONFIG_FILE, 'r') as file:
         config = json.load(file)
 
@@ -96,7 +107,7 @@ def update_hosts_file(block_ads, block_malware, block_tracking, block_malicious)
     if block_tracking:
         urls.extend(config.get('tracking_block_lists', []))
     if block_malicious:
-        urls.extend(config.get('ad_block_lists', []))
+        urls.extend(config.get('malicious_block_lists', []))
 
     if not urls:
         messagebox.showerror("Error", "No block lists selected.")
@@ -109,27 +120,41 @@ def update_hosts_file(block_ads, block_malware, block_tracking, block_malicious)
         append_to_hosts_file(hosts_path, domains)
         messagebox.showinfo("Success", "Hosts file updated successfully.")
     except PermissionError:
-        # If backup_hosts_file raises a PermissionError catch here.
         return
         
 def create_gui():
     root = tk.Tk()
     root.title("Hosts-Based Domain Blocker")
+    root.geometry('400x300')  # Set the window size
+    root.configure(bg='lightgrey')  # Set the background color
 
-    tk.Label(root, text="Select the types of content to block:").pack(pady=10)
+    frame = ttk.Frame(root, padding="10")
+    frame.pack(fill='both', expand=True)
+
+    label = ttk.Label(frame, text="Select the types of content to block:")
+    label.grid(row=0, column=0, columnspan=2, pady=10)
 
     block_ads = tk.BooleanVar()
     block_malware = tk.BooleanVar()
     block_tracking = tk.BooleanVar()
     block_malicious = tk.BooleanVar()
 
-    tk.Checkbutton(root, text="Advertisements", variable=block_ads).pack(anchor='w')
-    tk.Checkbutton(root, text="Malware", variable=block_malware).pack(anchor='w')
-    tk.Checkbutton(root, text="Tracking", variable=block_tracking).pack(anchor='w')
-    tk.Checkbutton(root, text="Malicious", variable=block_malicious).pack(anchor='w')
+    ttk.Checkbutton(frame, text="Advertisements", variable=block_ads).grid(row=1, column=0, sticky='w')
+    ttk.Checkbutton(frame, text="Malware", variable=block_malware).grid(row=2, column=0, sticky='w')
+    ttk.Checkbutton(frame, text="Tracking", variable=block_tracking).grid(row=3, column=0, sticky='w')
+    ttk.Checkbutton(frame, text="Malicious", variable=block_malicious).grid(row=4, column=0, sticky='w')
 
-    tk.Button(root, text="Update Hosts File", command=lambda: update_hosts_file(block_ads.get(), block_malware.get(), block_tracking.get(), block_malicious)).pack(pady=10)
-    tk.Button(root, text="Restore Hosts File", command=restore_hosts_file).pack(pady=10)
+    log_text = tk.Text(frame, height=10, wrap='word')
+    log_text.grid(row=5, column=0, columnspan=2, pady=10, sticky='nsew')
+
+    frame.grid_rowconfigure(5, weight=1)
+    frame.grid_columnconfigure(1, weight=1)
+
+    update_button = ttk.Button(frame, text="Update Hosts File", command=lambda: update_hosts_file(block_ads.get(), block_malware.get(), block_tracking.get(), block_malicious.get(), log_text))
+    update_button.grid(row=6, column=0, pady=10)
+
+    restore_button = ttk.Button(frame, text="Restore Hosts File", command=restore_hosts_file)
+    restore_button.grid(row=6, column=1, pady=10)
 
     root.mainloop()
 
