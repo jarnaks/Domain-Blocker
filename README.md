@@ -24,7 +24,8 @@ The script reads the URLs of the domain block lists from a `config.json` file in
     "malicious_block_lists": [
         "https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt"
     ]
-} ```
+}
+```
 You can modify this file to include the desired URLs for the respective block lists.
 Usage
 When you run the script, a graphical user interface (GUI) will appear. In the GUI, you can select the types of content you want to block by checking the corresponding checkboxes (Advertisements, Malware, Tracking, Malicious). After making your selections, click the "Update Hosts File" button to update the `hosts` file with the combined list of domains from the selected block lists.
