@@ -336,31 +336,31 @@ Testing involved verifying the program's ability to download block lists, parse 
 # Documentation of the Testing Process
 ## Test Cases
 
-## Test Case 1:  Backup Hosts File Not Found
+Test Case 1:  Backup Hosts File Not Found
 Description: Run the script when the hosts file does not exist.
 Expected Result: The script should create a new hosts file and proceed with the backup.
 Actual Result: Hosts file created and backed up successfully.
 Debugging: Confirmed the creation of the new hosts file and its backup.
 
-## Test Case 2: Insufficient Permissions
+Test Case 2: Insufficient Permissions
 Description: Run the script without administrative privileges.
 Expected Result: The script should show a permission error.
 Actual Result: Permission error displayed as expected.
 Debugging: Verified that running the script with elevated privileges resolves the issue.
 
-## Test Case 3: Restore Without Backup
+Test Case 3: Restore Without Backup
 Description: Attempt to restore the hosts file without a prior backup.
 Expected Result: The script should show an error indicating no backup found.
 Actual Result: Error displayed as expected.
 Debugging: Confirmed that creating a backup before restoring resolves the issue.
 
-## Test Case 4: Block Lists Selected
+Test Case 4: Block Lists Selected
 Description: Attempt to update the hosts file without selecting any block lists.
 Expected Result: The script should show an error indicating no block lists selected.
 Actual Result: Error displayed as expected.
 Debugging: Ensured that selecting at least one block list resolves the issue.
 
-## Test Case 5: Block List Download Failure
+Test Case 5: Block List Download Failure
 Description: Simulate a failed download from a block list URL.
 Expected Result: The script should print an error message indicating the download failure.
 Actual Result: Error message printed as expected.
