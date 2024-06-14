@@ -104,17 +104,120 @@ flowchart TD
     StartMainLoop --> End
 ```
 
+## Pseudo Code
 
 ```
-FUNCTION update_hosts_file(preferences):
-    IF preferences NOT SELECTED:
-        RETURN "Error: No preferences selected"
-    URLs = GET_URLs_FROM_CONFIG(preferences)
-    domains = DOWNLOAD_AND_PARSE_LISTS(URLs)
-    hosts_path = GET_HOSTS_FILE_PATH()
-    BACKUP_HOSTS_FILE(hosts_path)
-    APPEND_TO_HOSTS_FILE(hosts_path, domains)
-    RETURN "Success: Hosts file updated"
+BEGIN
+
+DEFINE CONSTANT CONFIG_FILE = 'config.json'
+
+FUNCTION get_hosts_file_path():
+    IF system is 'Windows':
+        RETURN 'C:\blocked_hosts\hosts'
+    ELSE:
+        RETURN '/etc/blocked_hosts/hosts'
+
+FUNCTION ensure_directory_exists(path):
+    directory = get the directory name from path
+    IF directory does not exist:
+        create the directory
+
+FUNCTION backup_hosts_file(hosts_path):
+    timestamp = current timestamp formatted as 'YYYYMMDDHHMMSS'
+    backup_path = hosts_path + '_backup_' + timestamp
+    TRY:
+        copy hosts_path to backup_path
+        copy hosts_path to 'hosts_last_used'
+        RETURN backup_path
+    CATCH FileNotFoundError:
+        SHOW error message "Hosts file not found at hosts_path. Creating a new one."
+        ensure_directory_exists(hosts_path)
+        create an empty file at hosts_path
+        CALL backup_hosts_file(hosts_path)
+    CATCH PermissionError:
+        SHOW error message "Permission denied: Unable to access hosts_path. Please run the script as an administrator."
+        RAISE the error
+
+FUNCTION restore_hosts_file():
+    hosts_path = CALL get_hosts_file_path()
+    IF 'hosts_last_used' exists:
+        copy 'hosts_last_used' to hosts_path
+        SHOW info message "Hosts file restored to the last used state."
+    ELSE:
+        SHOW error message "No backup found to restore."
+
+FUNCTION download_and_parse_lists(urls):
+    domains = an empty set
+    FOR each url in urls:
+        TRY:
+            PRINT "Downloading from url..."
+            response = download content from url
+            response.raise_for_status()
+            PRINT first 500 characters of response content for debugging
+            FOR each line in response content:
+                trim whitespace from line
+                IF line starts with '0.0.0.0' OR '127.0.0.1':
+                    split line into parts
+                    IF parts length > 1:
+                        domain = second part of parts
+                        add domain to domains set
+        CATCH RequestException as e:
+            PRINT "Failed to download url: e"
+    PRINT "Collected domains: domains"
+    RETURN domains
+
+FUNCTION append_to_hosts_file(hosts_path, domains):
+    OPEN hosts_path in append mode as hosts_file:
+        FOR each domain in domains:
+            WRITE "0.0.0.0 domain" to hosts_file
+    PRINT "Appended domains to hosts file: domains"
+
+FUNCTION update_hosts_file(block_ads, block_malware, block_tracking, block_malicious):
+    OPEN CONFIG_FILE in read mode as file:
+        config = parse JSON from file
+
+    urls = an empty list
+    IF block_ads:
+        append 'ad_block_lists' from config to urls
+    IF block_malware:
+        append 'malware_block_lists' from config to urls
+    IF block_tracking:
+        append 'tracking_block_lists' from config to urls
+    IF block_malicious:
+        append 'ad_block_lists' from config to urls
+
+    IF urls is empty:
+        SHOW error message "No block lists selected."
+        RETURN
+
+    domains = CALL download_and_parse_lists(urls)
+    hosts_path = CALL get_hosts_file_path()
+    TRY:
+        CALL backup_hosts_file(hosts_path)
+        CALL append_to_hosts_file(hosts_path, domains)
+        SHOW info message "Hosts file updated successfully."
+    CATCH PermissionError:
+        RETURN
+
+FUNCTION create_gui():
+    root = CREATE a new Tkinter window
+    SET title of root to "Hosts-Based Domain Blocker"
+
+    CREATE and pack a label "Select the types of content to block:"
+
+    DEFINE BooleanVar block_ads, block_malware, block_tracking, block_malicious
+
+    CREATE and pack checkbuttons for each BooleanVar with corresponding labels
+
+    CREATE and pack a button "Update Hosts File" with command to CALL update_hosts_file with BooleanVars values
+    CREATE and pack a button "Restore Hosts File" with command to CALL restore_hosts_file
+
+    START the Tkinter main loop
+
+IF script is run as main:
+    CALL create_gui()
+
+END
 ```
 
 ## Software Design
